@@ -1,0 +1,10 @@
+# Train, Val, and Test paths
+train: C:/Users/RITIK/Downloads/Combined_Fire_Dataset/train/images
+val: C:/Users/RITIK/Downloads/Combined_Fire_Dataset/valid/images
+test: C:/Users/RITIK/Downloads/Combined_Fire_Dataset/test/images
+
+# Number of classes
+nc: 1
+
+# Class names
+names: ['fire']
