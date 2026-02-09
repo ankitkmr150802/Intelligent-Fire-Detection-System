@@ -23,7 +23,7 @@ This project focuses on:
 
 ## 🖼️ Detection Preview
 
-![Sample Detection](Imgyolov11.png)
+![Sample Detection](assets/Imgyolov11.png)
 
 ---
 
