@@ -5,6 +5,7 @@ from ultralytics import YOLO
 from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
 import av
 
+
 # Page Configuration with latest 2026 standards
 st.set_page_config(page_title="FireGuard AI Pro", layout="wide")
 st.title("Intelligent Fire Detection System")
