@@ -2,8 +2,7 @@ streamlit
 ultralytics
 opencv-python-headless
 numpy
-pillow
 av
 streamlit-webrtc
 numpy==1.26.4
-torch==2.2.2
+
