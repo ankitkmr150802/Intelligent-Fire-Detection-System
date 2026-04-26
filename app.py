@@ -2,95 +2,115 @@ import streamlit as st
 import cv2
 import numpy as np
 from ultralytics import YOLO
-from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
-import av
+from PIL import Image
 
+# Try WebRTC (optional)
+try:
+    from streamlit_webrtc import webrtc_streamer, VideoProcessorBase, RTCConfiguration
+    import av
+    WEBRTC_AVAILABLE = True
+except:
+    WEBRTC_AVAILABLE = False
 
-# Page Configuration with latest 2026 standards
+# Page Config
 st.set_page_config(page_title="FireGuard AI Pro", layout="wide")
-st.title("Intelligent Fire Detection System")
+st.title("🔥 Intelligent Fire Detection System")
 
-# Load Model
+# Load Model (CPU forced for stability)
 @st.cache_resource
 def load_model():
-    return YOLO('best_Final_model.pt')
+    model = YOLO("best_Final_model.pt")
+    model.to("cpu")
+    return model
 
 model = load_model()
 
-# Sidebar Control Panel
+# Sidebar
 st.sidebar.header("Control Panel")
-conf_threshold = st.sidebar.slider("Confidence", 0.1, 1.0, 0.40)
+conf_threshold = st.sidebar.slider("Confidence", 0.1, 1.0, 0.4)
 area_threshold = st.sidebar.slider("Red Alert Threshold", 1000, 30000, 4000)
 
-# Implementation of Dual-Mode Tabs
-tab1, tab2 = st.tabs(["Real-Time Monitor", "Snapshot Analysis"])
+tab1, tab2 = st.tabs(["📷 Snapshot / Upload", "🎥 Live Monitor (Beta)"])
 
-# --- TAB 1: REAL-TIME DETECTION (Optimized for 2026) ---
+# ---------------- SNAPSHOT / UPLOAD (MAIN FEATURE) ----------------
 with tab1:
-    st.subheader("Live Video Feed")
-    
-    class VideoProcessor(VideoProcessorBase):
-        def __init__(self):
-            self.model = model
+    st.subheader("Upload or Capture Image")
 
-        def recv(self, frame):
-            img = frame.to_ndarray(format="bgr24")
-            
-            # Efficient inference
-            results = self.model.predict(img, conf=conf_threshold, verbose=False)
-            
-            for r in results:
-                for box in r.boxes:
-                    x1, y1, x2, y2 = map(int, box.xyxy[0])
-                    area = (x2 - x1) * (y2 - y1)
-                    
-                    # Alert Logic based on fire size
-                    if area > area_threshold:
-                        color, label = (0, 0, 255), "RED ALERT: FIRE"
-                    else:
-                        color, label = (0, 255, 255), "WARNING: SMALL FLAME"
-                    
-                    cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
-                    cv2.putText(img, label, (x1, y1 - 10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-            
-            return av.VideoFrame.from_ndarray(img, format="bgr24")
+    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
+    camera_img = st.camera_input("Or capture from camera")
 
-    # STUN configuration for web deployment
-    RTC_CONFIG = RTCConfiguration(
-        {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-    )
+    img = None
 
-    webrtc_streamer(
-        key="fire-detection",
-        video_processor_factory=VideoProcessor,
-        rtc_configuration=RTC_CONFIG,
-        media_stream_constraints={"video": True, "audio": False},
-        async_processing=True
-    )
+    if uploaded_file:
+        img = Image.open(uploaded_file)
+        img = np.array(img)
 
-# --- TAB 2: SNAPSHOT ANALYSIS (Warning Free) ---
-with tab2:
-    st.subheader("High-Resolution Snapshot Analysis")
-    img_file_buffer = st.camera_input("Take a photo for detailed check")
-    
-    if img_file_buffer is not None:
-        file_bytes = np.frombuffer(img_file_buffer.getvalue(), np.uint8)
+    elif camera_img:
+        file_bytes = np.frombuffer(camera_img.getvalue(), np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
-        
-        # High resolution prediction
-        results = model.predict(img, conf=conf_threshold, verbose=False)
-        
-        for r in results:
-            for box in r.boxes:
-                x1, y1, x2, y2 = map(int, box.xyxy[0])
-                area = (x2 - x1) * (y2 - y1)
-                
-                color = (0, 0, 255) if area > area_threshold else (0, 255, 255)
-                label = "FIRE DETECTED" if area > area_threshold else "WARNING"
-                
-                cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
-                cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-        
-        # Fixed: Replaced use_container_width with width='stretch' as per latest API
-        st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), use_container_width=True)
+
+    if img is not None:
+        if img is None:
+            st.error("Image processing failed.")
+        else:
+            img = img.astype(np.uint8)
+
+            try:
+                results = model.predict(img, conf=conf_threshold, verbose=False)
+
+                for r in results:
+                    for box in r.boxes:
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
+                        area = (x2 - x1) * (y2 - y1)
+
+                        if area > area_threshold:
+                            color, label = (0, 0, 255), "🔥 FIRE DETECTED"
+                        else:
+                            color, label = (0, 255, 255), "⚠️ SMALL FLAME"
+
+                        cv2.rectangle(img, (x1, y1), (x2, y2), color, 3)
+                        cv2.putText(img, label, (x1, y1 - 10),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+
+                st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), use_container_width=True)
+
+            except Exception as e:
+                st.error(f"Inference failed: {e}")
+
+# ---------------- LIVE MONITOR (SAFE VERSION) ----------------
+with tab2:
+    st.subheader("Live Detection (Experimental)")
+
+    if not WEBRTC_AVAILABLE:
+        st.warning("Live video not supported in this environment.")
+    else:
+        try:
+            class VideoProcessor(VideoProcessorBase):
+                def recv(self, frame):
+                    img = frame.to_ndarray(format="bgr24")
+
+                    img = img.astype(np.uint8)
+
+                    results = model.predict(img, conf=conf_threshold, verbose=False)
+
+                    for r in results:
+                        for box in r.boxes:
+                            x1, y1, x2, y2 = map(int, box.xyxy[0])
+                            cv2.rectangle(img, (x1, y1), (x2, y2), (0,255,255), 2)
+
+                    return av.VideoFrame.from_ndarray(img, format="bgr24")
+
+            RTC_CONFIG = RTCConfiguration(
+                {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+            )
+
+            webrtc_streamer(
+                key="fire",
+                video_processor_factory=VideoProcessor,
+                rtc_configuration=RTC_CONFIG,
+                media_stream_constraints={"video": True, "audio": False},
+                async_processing=True
+            )
+
+        except Exception as e:
+            st.error("Live video failed. Use snapshot mode instead.")
