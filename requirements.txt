@@ -5,3 +5,4 @@ numpy
 pillow
 av
 streamlit-webrtc
+torch==2.2.2
