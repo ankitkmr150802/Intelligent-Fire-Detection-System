@@ -102,14 +102,27 @@ with tab2:
                 return av.VideoFrame.from_ndarray(img, format="bgr24")
 
         # Multi-STUN configuration for better connectivity
+        # RTC_CONFIG = RTCConfiguration(
+        #     {"iceServers": [
+        #         {"urls": ["stun:stun.l.google.com:19302"]},
+        #         {"urls": ["stun:stun1.l.google.com:19302"]},
+        #         {"urls": ["stun:stun2.l.google.com:19302"]},
+        #         {"urls": ["stun:stun.services.mozilla.com"]}
+        #     ]}
+        # )
         RTC_CONFIG = RTCConfiguration(
-            {"iceServers": [
-                {"urls": ["stun:stun.l.google.com:19302"]},
-                {"urls": ["stun:stun1.l.google.com:19302"]},
-                {"urls": ["stun:stun2.l.google.com:19302"]},
-                {"urls": ["stun:stun.services.mozilla.com"]}
-            ]}
-        )
+    {"iceServers": [
+        {"urls": ["stun:stun.l.google.com:19302"]},
+        {"urls": ["stun:stun1.l.google.com:19302"]},
+        {"urls": ["stun:stun2.l.google.com:19302"]},
+        {"urls": ["stun:stun3.l.google.com:19302"]},
+        {"urls": ["stun:stun.ekiga.net"]},
+        {"urls": ["stun:stun.ideasip.com"]},
+        {"urls": ["stun:stun.schlund.de"]},
+        {"urls": ["stun:stun.voiparound.com:3478"]},
+        {"urls": ["stun:stun.nextcloud.com:443"]},
+    ]}
+)
 
         webrtc_streamer(
             key="fire-detection-live",
