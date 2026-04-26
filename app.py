@@ -42,7 +42,7 @@ with tab1:
     img = None
 
     if uploaded_file:
-        img = Image.open(uploaded_file)
+        img = Image.open(uploaded_file).convert("RGB")  # 🔥 FIX
         img = np.array(img)
 
     elif camera_img:
