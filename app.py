@@ -93,4 +93,4 @@ with tab2:
                 cv2.putText(img, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
         
         # Fixed: Replaced use_container_width with width='stretch' as per latest API
-        st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), width='stretch')
+        st.image(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), use_container_width=True)
