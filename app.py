@@ -61,7 +61,7 @@ with tab1:
                 area = (x2 - x1) * (y2 - y1)
                 
                 if area > area_threshold:
-                    color, label = (0, 0, 255), "🚨 RED ALERT: FIRE"
+                    color, label = (0, 0, 255), "RED ALERT: FIRE"
                 else:
                     color, label = (0, 255, 255), "WARNING: FLAME"
                 
