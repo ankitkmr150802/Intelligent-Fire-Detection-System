@@ -16,11 +16,11 @@ except ImportError:
 st.set_page_config(page_title="FireGuard AI Pro", layout="wide")
 st.title("🔥 Intelligent Fire Detection System")
 
-# --- Model Loading (Optimized for Streamlit Cloud) ---
+# --- Model Loading ---
 @st.cache_resource
 def load_model():
+    # Make sure 'best_Final_model.pt' is in the same folder
     model = YOLO("best_Final_model.pt")
-    model.to("cpu")  # Forced CPU for cloud stability
     return model
 
 model = load_model()
@@ -28,7 +28,6 @@ model = load_model()
 # --- Sidebar ---
 st.sidebar.header("⚙️ Control Panel")
 conf_threshold = st.sidebar.slider("Confidence", 0.1, 1.0, 0.4)
-# Tip: Sidebar se is threshold ko kam-zyada karke check karna
 area_threshold = st.sidebar.slider("Red Alert Threshold (px)", 1000, 30000, 4000)
 
 tab1, tab2 = st.tabs(["📷 Snapshot / Upload", "🎥 Live Monitor (Beta)"])
@@ -53,6 +52,7 @@ with tab1:
         input_img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
     if input_img is not None:
+        # Prediction
         results = model.predict(input_img, conf=conf_threshold, verbose=False)
         
         for r in results:
@@ -60,7 +60,6 @@ with tab1:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 area = (x2 - x1) * (y2 - y1)
                 
-                # Logic Fix: Yellow to Red
                 if area > area_threshold:
                     color, label = (0, 0, 255), "🚨 RED ALERT: FIRE"
                 else:
@@ -73,66 +72,38 @@ with tab1:
         st.image(cv2.cvtColor(input_img, cv2.COLOR_BGR2RGB), 
                  caption="Detection Result", use_container_width=True)
 
-# ---------------- TAB 2: LIVE MONITOR (UPDATED LOGIC) ----------------
+# ---------------- TAB 2: LIVE MONITOR ----------------
 with tab2:
-    st.subheader("Real-Time Detection Feed")
-    
     if not WEBRTC_AVAILABLE:
-        st.error("Missing libraries (streamlit-webrtc or av). Check requirements.txt")
+        st.error("Missing libraries. Check requirements.txt")
     else:
         class VideoProcessor(VideoProcessorBase):
             def __init__(self):
-                self.frame_skip = 0 
+                self.frame_skip = 0
 
             def recv(self, frame):
-                self.frame_skip += 1
                 img = frame.to_ndarray(format="bgr24")
-
-                # Har 2nd frame process kar rahe hain better balance ke liye
-                if self.frame_skip % 2 == 0:
-                    # imgsz=320 speed ke liye zaroori hai cloud par
+                self.frame_skip += 1
+                
+                # Inference only every 3rd frame to prevent lag on Cloud CPU
+                if self.frame_skip % 3 == 0:
                     results = model.predict(img, conf=conf_threshold, verbose=False, imgsz=320)
                     for r in results:
                         for box in r.boxes:
                             x1, y1, x2, y2 = map(int, box.xyxy[0])
                             current_area = (x2 - x1) * (y2 - y1)
                             
-                            # LIVE LOGIC: Yellow to Red switching
-                            if current_area > area_threshold:
-                                color, label = (0, 0, 255), "FIRE!"
-                                thick = 3
-                            else:
-                                color, label = (0, 255, 255), "Flame"
-                                thick = 2
-                                
-                            cv2.rectangle(img, (x1, y1), (x2, y2), color, thick)
-                            cv2.putText(img, label, (x1, y1-10), 
-                                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                            color, label = ((0, 0, 255), "FIRE!") if current_area > area_threshold else ((0, 255, 255), "Flame")
+                            
+                            cv2.rectangle(img, (x1, y1), (x2, y2), color, 2)
+                            cv2.putText(img, label, (x1, y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
                 return av.VideoFrame.from_ndarray(img, format="bgr24")
 
-        # Multi-STUN configuration (No changes here)
-        RTC_CONFIG = RTCConfiguration(
-            {"iceServers": [
-                {"urls": ["stun:stun.l.google.com:19302"]},
-                {"urls": ["stun:stun1.l.google.com:19302"]},
-                {"urls": ["stun:stun2.l.google.com:19302"]},
-                {"urls": ["stun:stun3.l.google.com:19302"]},
-                {"urls": ["stun:stun.ekiga.net"]},
-                {"urls": ["stun:stun.ideasip.com"]},
-                {"urls": ["stun:stun.schlund.de"]},
-                {"urls": ["stun:stun.voiparound.com:3478"]},
-                {"urls": ["stun:stun.nextcloud.com:443"]},
-            ]}
-        )
-
         webrtc_streamer(
-            key="fire-detection-live",
+            key="fire-detection",
             video_processor_factory=VideoProcessor,
-            rtc_configuration=RTC_CONFIG,
+            rtc_configuration=RTCConfiguration({"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}),
             media_stream_constraints={"video": True, "audio": False},
             async_processing=True
         )
-
-st.sidebar.markdown("---")
-st.sidebar.info("Tip: Adjust 'Red Alert Threshold' to change when the box turns RED.")
