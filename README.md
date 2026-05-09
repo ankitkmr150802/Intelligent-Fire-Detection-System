@@ -1,4 +1,3 @@
-# 🛡️ FireGuard-YOLO11
 ### Real-Time Intelligent Fire Detection Using Deep Learning
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue?style=for-the-badge&logo=python)
@@ -10,8 +9,8 @@
 
 ## 📌 Overview
 
-**FireGuard-YOLO11** is a real-time intelligent fire detection system designed to detect fire at an early stage and reduce the risk of large-scale damage.  
-The model is trained on a **42,000+ image custom-curated dataset** using a **chunk-wise progressive training strategy**, enabling stable convergence and improved generalization.
+**This Project** is a real-time intelligent fire detection system designed to detect fire at an early stage and reduce the risk of large-scale damage.  
+The model is trained on a **100,000+ image custom-curated dataset** using a **chunk-wise progressive training strategy**, enabling stable convergence and improved generalization.
 
 This project focuses on:
 - Early fire detection
@@ -31,11 +30,11 @@ This project focuses on:
 
 | Metric | Value |
 |------|------|
-| **Dataset Size** | 42,000+ Images (Custom Curated) |
+| **Dataset Size** | 100,000+ Images (Custom Curated) |
 | **Model Architecture** | YOLO11 Nano |
-| **mAP@50** | **0.723** |
+| **mAP@50** | **0.773** |
 | **Precision** | **0.79** |
-| **Recall** | **0.64** |
+| **Recall** | **0.729** |
 | **Inference Latency** | ~1.8 ms (Tesla P100) |
 | **Final Model Size** | 5.5 MB |
 
