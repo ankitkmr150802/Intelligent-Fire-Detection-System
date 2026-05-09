@@ -9,6 +9,12 @@
 
 ## 📌 Overview
 
+**🤔 Problem Description:**
+Fire incidents can cause catastrophic damage and loss of life when not detected early enough. Current detection methods, which rely primarily on traditional sensors, often have delayed response times that can lead to severe consequences. This creates a critical need for faster, more reliable detection systems that can identify fire hazards at their earliest stages. To address this challenge, this project implements advanced deep learning technology to detect fires and smoke as they emerge, enabling rapid response and intervention.
+
+**✅ Solution:**
+This Project represents a state-of-the-art approach to fire safety monitoring. At its core, the system uses YOLOv11, a powerful object detection model, to continuously analyze video feeds for signs of fire and smoke in real-time. When potential threats are detected, the system immediately sends alerts through Telegram/WhatsApp messaging platforms, ensuring that stakeholders are notified without delay. While this project is not integrated with communication channal.
+
 **This Project** is a real-time intelligent fire detection system designed to detect fire at an early stage and reduce the risk of large-scale damage.  
 The model is trained on a **100,000+ image custom-curated dataset** using a **chunk-wise progressive training strategy**, enabling stable convergence and improved generalization.
 
